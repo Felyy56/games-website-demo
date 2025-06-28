@@ -1,0 +1,829 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+  </head>
+  <body>
+  <style>
+    /* Modern Dark VR Game CSS */
+  
+    body {
+     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+     background: #0a0a0a;
+     margin: 0;
+     padding: 2rem;
+     min-height: 100vh;
+     color: #e2e8f0;
+     position: relative;
+    }
+  
+    /* Subtle animated background pattern */
+    body::before {
+     content: '';
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background: 
+       radial-gradient(circle at 20% 50%, rgba(31, 81, 255, 0.1) 0%, transparent 50%),
+       radial-gradient(circle at 80% 20%, rgba(31, 81, 255, 0.15) 0%, transparent 50%),
+       radial-gradient(circle at 40% 80%, rgba(31, 81, 255, 0.08) 0%, transparent 50%);
+     z-index: -1;
+     pointer-events: none;
+    }
+  
+    h1 {
+     text-align: center;
+     font-size: 3rem;
+     font-weight: 700;
+     background: linear-gradient(45deg, #1f51ff, #00d4ff);
+     -webkit-background-clip: text;
+     -webkit-text-fill-color: transparent;
+     background-clip: text;
+     margin-bottom: 3rem;
+     text-shadow: 0 0 30px rgba(31, 81, 255, 0.5);
+    }
+  
+      .filter-buttons {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin: 0 auto 2.5rem; /* auto centers it horizontally */
+        padding: 1.5rem;
+        background: rgba(15, 15, 15, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(31, 81, 255, 0.2);
+        max-width: 50em;
+        width: 100%; /* ensures it scales responsively on smaller screens */
+      }
+  
+    .filter-buttons button {
+     padding: 0.75rem 1.5rem;
+     border: none;
+     background: #1f51ff;
+     color: white;
+     border-radius: 0.5rem;
+     cursor: pointer;
+     font-weight: 500;
+     font-size: 0.875rem;
+     letter-spacing: 0.025em;
+     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     position: relative;
+     overflow: hidden;
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(31, 81, 255, 0.3);
+    }
+  
+    .filter-buttons button::before {
+     content: '';
+     position: absolute;
+     top: 0;
+     left: -100%;
+     width: 100%;
+     height: 100%;
+     background: linear-gradient(90deg, transparent, rgba(31, 81, 255, 0.4), transparent);
+     transition: left 0.5s;
+    }
+  
+   
+  
+    .filter-buttons button.active {
+     background: linear-gradient(135deg, #1f51ff, #0066ff);
+     color: white;
+     transform: translateY(-2px) scale(1.05);
+     box-shadow: 0 10px 25px rgba(31, 81, 255, 0.5);
+     border-color: #1f51ff;
+    }
+  
+    .filter-buttons button:active {
+     transform: translateY(0) scale(0.98);
+    }
+  
+    .game-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+     gap: 2rem;
+     max-width: 1400px;
+     margin: 0 auto;
+    }
+  
+    .game-card {
+     background: rgba(20, 20, 20, 0.95);
+     border-radius: 1.5rem;
+     overflow: hidden;
+     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+     text-decoration: none;
+     color: inherit;
+     display: block;
+     position: relative;
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(31, 81, 255, 0.2);
+    }
+  
+    .game-card::before {
+     content: '';
+     position: absolute;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background: linear-gradient(135deg, rgba(31, 81, 255, 0.1), rgba(0, 102, 255, 0.1));
+     opacity: 0;
+     transition: opacity 0.3s ease;
+     z-index: 1;
+     pointer-events: none;
+    }
+  
+    .game-card:hover::before {
+     opacity: 1;
+    }
+  
+    .game-card:hover {
+     transform: translateY(-8px) scale(1.02);
+     box-shadow: 0 20px 40px rgba(31, 81, 255, 0.3), 0 0 0 1px rgba(31, 81, 255, 0.4);
+     background: rgba(25, 25, 25, 1);
+    }
+  
+    .image-container {
+     position: relative;
+     width: 100%;
+     padding-top: 100%;
+     overflow: hidden;
+     background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    }
+  
+    .image-container img {
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+     z-index: 2;
+    }
+  
+    .game-card:hover .image-container img {
+     transform: scale(1.08);
+    }
+  
+    .game-card h3 {
+     margin: 1.25rem;
+     font-size: 1.25rem;
+     font-weight: 600;
+     color: #f7fafc;
+     z-index: 3;
+     position: relative;
+    }
+  
+    .game-card p {
+     margin: 0 1.25rem 1.25rem;
+     color: #a0aec0;
+     font-size: 0.875rem;
+     line-height: 1.5;
+     z-index: 3;
+     position: relative;
+    }
+  
+    .hidden {
+     display: none;
+    }
+  
+    /* Game Counter Styling */
+    #game-counter {
+     text-align: center;
+     margin: 2rem 0;
+     font-size: 1.125rem;
+     color: rgba(226, 232, 240, 0.8);
+     font-weight: 500;
+     padding: 1rem;
+     background: rgba(15, 15, 15, 0.8);
+     backdrop-filter: blur(10px);
+     border-radius: 0.75rem;
+     border: 1px solid rgba(31, 81, 255, 0.3);
+     max-width: 300px;
+     margin: 2rem auto;
+     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+  
+    /* Responsive Design */
+    @media (max-width: 768px) {
+     body {
+       padding: 1rem;
+     }
+  
+     h1 {
+       font-size: 2rem;
+       margin-bottom: 2rem;
+     }
+  
+     .filter-buttons {
+       gap: 0.5rem;
+       padding: 1rem;
+     }
+  
+     .filter-buttons button {
+       padding: 0.5rem 1rem;
+       font-size: 0.8rem;
+     }
+  
+     .game-grid {
+       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+       gap: 1.5rem;
+     }
+    }
+  
+    @media (max-width: 480px) {
+     .game-grid {
+       grid-template-columns: 1fr;
+       gap: 1rem;
+     }
+  
+     .filter-buttons {
+       flex-direction: column;
+       align-items: center;
+     }
+  
+     .filter-buttons button {
+       width: 200px;
+     }
+    }
+  
+    /* Loading Animation */
+    @keyframes fadeInUp {
+     from {
+       opacity: 0;
+       transform: translateY(30px);
+     }
+     to {
+       opacity: 1;
+       transform: translateY(0);
+     }
+    }
+  
+    .game-card {
+     animation: fadeInUp 0.6s ease-out;
+    }
+  
+    .game-card:nth-child(1) { animation-delay: 0.1s; }
+    .game-card:nth-child(2) { animation-delay: 0.2s; }
+    .game-card:nth-child(3) { animation-delay: 0.3s; }
+    .game-card:nth-child(4) { animation-delay: 0.4s; }
+    .game-card:nth-child(5) { animation-delay: 0.5s; }
+    .game-card:nth-child(6) { animation-delay: 0.6s; }
+  
+    /* Smooth scrolling */
+    html {
+     scroll-behavior: smooth;
+    }
+  
+    /* Selection styling */
+    ::selection {
+     background: rgba(31, 81, 255, 0.4);
+     color: #f7fafc;
+    }
+  
+    
+/* Scrollbar styling for webkit browsers */
+    ::-webkit-scrollbar {
+     width: 8px;
+    }
+  
+    ::-webkit-scrollbar-track {
+     background: #1a1a1a;
+    }
+  
+    ::-webkit-scrollbar-thumb {
+     background: rgba(31, 81, 255, 0.6);
+     border-radius: 4px;
+    }
+  
+    ::-webkit-scrollbar-thumb:hover {
+     background: rgba(31, 81, 255, 0.8);
+    }
+  </style>
+  <div class="filter-buttons">
+  <button onclick="filterGames('all')">Alla</button>
+  <button onclick="filterGames('cooperative')">Företag</button>
+  <button onclick="filterGames('competitive')">Tävling</button>
+  <button onclick="filterGames('Zombie')">Zombie Shooting</button>
+  <button onclick="filterGames('family')">Familjevänlig</button>
+  <button onclick="filterGames('Children')">Barnanpassat</button>
+  
+  </div>
+  
+  <div class="game-grid" id="gameGrid">
+  
+    <style>
+
+        
+        .duration-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(31, 81, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(31, 81, 255, 0.3);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .duration-badge::before {
+            content: "⏱";
+            font-size: 0.9em;
+        }
+
+        .game-card:hover .duration-badge {
+            background: rgba(31, 81, 255, 1);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(31, 81, 255, 0.5);
+        }
+
+
+        .duration-badge.glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+    </style>
+
+
+<!-- KUNGÄLVS SPEL -->
+
+<a href="https://vrextreme.se/spelupplevelse/kitchen-panic/" class="game-card family cooperative competitive Children" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async"  src="https://vex-solutions.com/wp-content/uploads/2024/02/kitchenPanic_thumbnail-600x403.jpg" alt="KITCHEN PANIC">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/party-playland/" class="game-card family cooperative Children" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2024/09/Partyland.png" alt="Party Playland">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/death-squad/" class="game-card Zombie cooperative competitive" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2021/07/arenaDeathSquadk_banner.jpg" alt="DEATH SQUAD">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/the-b-block-breakout/" class="game-card cooperative" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/08/Cinematic-B-Block-Breakout-Poster-Landscape-1870x770-1.jpg" alt="THE B-block BREAKOUT">
+      <div class="duration-badge glass">60 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/kraken-island/" class="game-card family cooperative competitive" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_Kraken-Island_Thumbnail.jpg" alt="KRAKEN Island">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/the-parvus-box/" class="game-card family cooperative" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_parvus.jpg" alt="The parvus box">
+      <div class="duration-badge glass">60 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/cops-and-robbers/" class="game-card family cooperative competitive" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_cops-1-1080x770.jpg" alt="COPS & ROBBERS">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/space-academy/" class="game-card family cooperative" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/10/videoframe_0.jpg" alt="SPACE ACADEMY">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/dragonfall/" class="game-card family cooperative" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_dragonfall.jpg" alt="DRAGONFALL">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+
+  <a href="https://vrextreme.se/spelupplevelse/cyber-clash-tournament/" class="game-card family cooperative Children" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_smurf.jpg" alt="the-smurfs-blueberry-battle">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+
+  <a href="https://vrextreme.se/spelupplevelse/cyber-clash-tournament/" class="game-card family cooperative competitive" data-location="kungalv">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_greenium.jpg" alt="greenium">
+      <div class="duration-badge glass">60 min</div>
+    </div>
+  </a>
+
+  
+<!-- GÖTEBORGS SPEL -->
+
+<a href="https://vrextreme.se/spelupplevelse/mission-z/" class="game-card Zombie cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Mission-Z-0-1-1.png" alt="MISSION Z">
+      <div class="duration-badge glass">30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/mission-z-2/" class="game-card Zombie cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/missionzbig.png" alt="MISSION Z II">
+      <div class="duration-badge glass">30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/rush-z/" class="game-card Zombie cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Rush-Z-A-1.png" alt="RUSH Z">
+      <div class="duration-badge glass">15 min</div>
+      
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/temple-party/" class="game-card Children family cooperative" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Temple-Party-2.png" alt="TEMPLE PARTY">
+      <div class="duration-badge glass">15 min</div>
+      
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/temple-quest/" class="game-card Children family" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Web-Temple-Quest.jpg" alt="TEMPLE QUEST">
+      <div class="duration-badge glass">30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/lunarscape-express/" class="game-card family cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Web-Lunarscape-Express.jpg" alt="LUNARSCAPE Express">
+      <div class="duration-badge glass">15 min</div>
+      
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/lunarscape-breakdown/" class="game-card family cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Lunarbig.png" alt="LUNARSCAPE Breakdown">
+      <div class="duration-badge glass">30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/dark-z/" class="game-card Zombie cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Dark-Z.jpg" alt="DARK Z">
+      <div class="duration-badge glass">15 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/kraken/" class="game-card family Children cooperative competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_Kraken-Island_Thumbnail.jpg" alt="KRAKEN Island">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/cyber-clash-tournament/" class="game-card competitive" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_CyberclashTournament_Beautyshot_Thumbnail.jpg" alt="Cyberclash TOURNAMENT">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/party-playland-gbg/" class="game-card Children family" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="http://vrextreme.se/wp-content/uploads/2024/09/Party-Playland-Square-1-scaled.jpg" alt="Party PLAYLAND">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+  <a href="https://vrextreme.se/spelupplevelse/space-academy/" class="game-card family cooperative" data-location="goteborg">
+    <div class="image-container">
+      <img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/10/featured_space_adv.jpg" alt="SPACE ACADEMY Adventure">
+      <div class="duration-badge glass">15-30 min</div>
+    </div>
+  </a>
+  
+
+  
+<!--POPUP------------------------------------------------------------------------------------------------------------------------------------------------>
+
+
+
+  
+  <div id="locationPopup" style="
+position: fixed; 
+top: 0; 
+left: 0; 
+right: 0; 
+bottom: 0;
+background: rgba(0,0,0,0.8);
+display: flex; 
+justify-content: center; 
+align-items: center; 
+flex-direction: column;
+z-index: 9999; 
+color: white; 
+font-family: Arial, sans-serif;">
+
+<h2 style="margin-bottom: 1rem;">Välj din plats</h2>
+
+<div>
+    <button id="btnKungalv" style="
+        margin: 0 10px; 
+        padding: 1rem 2rem; 
+        font-size: 1.25rem;
+        border: none; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        background-color: #1f51ff; 
+        color: white;
+        transition: background-color 0.3s ease;">
+        Kungälv
+    </button>
+    
+    <button id="btnGoteborg" style="
+        margin: 0 10px; 
+        padding: 1rem 2rem; 
+        font-size: 1.25rem;
+        border: none; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        background-color: #1f51ff; 
+        color: white;
+        transition: background-color 0.3s ease;">
+        Göteborg
+    </button>
+</div>
+
+
+<script>
+// Functions for cookies
+function setCookie(name, value, days = 30) {
+  const d = new Date();
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
+}
+
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for(let i=0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if(c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+  }
+  return null;
+}
+
+// Show/hide game cards based on location
+function filterGamesByLocation(location) {
+  const gameCards = document.querySelectorAll('.game-card');
+  gameCards.forEach(card => {
+    card.style.display = card.getAttribute('data-location') === location ? '' : 'none';
+  });
+}
+
+
+// Show main content and hide popup
+function showMainContent(location) {
+  const popup = document.getElementById('locationPopup');
+  const mainContent = document.getElementById('mainContent');
+  const selectedLocationText = document.getElementById('selectedLocation');
+  const locationNames = { kungalv: 'Kungälv', goteborg: 'Göteborg' };
+
+  if(popup) popup.style.display = 'none';
+  if(mainContent) mainContent.style.display = 'block';
+  if(selectedLocationText) selectedLocationText.textContent = `Du har valt: ${locationNames[location] || location}`;
+
+  filterGamesByLocation(location);
+}
+
+// Show popup and hide main content
+function showPopup() {
+  const popup = document.getElementById('locationPopup');
+  const mainContent = document.getElementById('mainContent');
+  if(popup) popup.style.display = 'flex';
+  if(mainContent) mainContent.style.display = 'none';
+}
+
+// Reset location selection (delete cookie and show popup again)
+function resetLocation() {
+  setCookie('locationChoice', '', -1);
+  showPopup();
+  // Show all playing cards again until selection is made
+  document.querySelectorAll('.game-card').forEach(card => card.style.display = '');
+}
+
+
+// Initialization on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const savedLocation = getCookie('locationChoice');
+  const btnKungalv = document.getElementById('btnKungalv');
+  const btnGoteborg = document.getElementById('btnGoteborg');
+
+  if(savedLocation === 'kungalv' || savedLocation === 'goteborg') {
+    showMainContent(savedLocation);
+  } else {
+    showPopup();
+  }
+
+  if(btnKungalv) {
+    btnKungalv.addEventListener('click', () => {
+      setCookie('locationChoice', 'kungalv');
+      showMainContent('kungalv');
+    });
+    btnKungalv.addEventListener('mouseenter', () => btnKungalv.style.backgroundColor = '#007acc');
+    btnKungalv.addEventListener('mouseleave', () => btnKungalv.style.backgroundColor = '#005f99');
+  }
+
+  if(btnGoteborg) {
+    btnGoteborg.addEventListener('click', () => {
+      setCookie('locationChoice', 'goteborg');
+      showMainContent('goteborg');
+    });
+    btnGoteborg.addEventListener('mouseenter', () => btnGoteborg.style.backgroundColor = '#007acc');
+    btnGoteborg.addEventListener('mouseleave', () => btnGoteborg.style.backgroundColor = '#005f99');
+  }
+
+
+  window.resetLocation = resetLocation;
+});
+
+</script>
+  
+  <script>
+    
+// Improved filtering with smooth animations and active button style
+    let currentFilter = 'all';
+  
+    function filterGames(category) {
+        
+// Update active button
+        updateActiveButton(category);
+  
+        // Save current filter
+        currentFilter = category;
+  
+        // Get all playing cards
+        const cards = document.querySelectorAll('.game-card');
+  
+        
+// Add fade-out animation first
+        cards.forEach(card => {
+            card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+        });
+  
+        
+// After fade-out, show/hide card and fade-in
+        setTimeout(() => {
+            cards.forEach(card => {
+                const shouldShow = category === 'all' || card.classList.contains(category);
+  
+                if (shouldShow) {
+                    card.classList.remove('hidden');
+                    // Smooth fade-in
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'scale(1)';
+                    }, 50);
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+  
+            // Count visible cards
+            const visibleCards = document.querySelectorAll('.game-card:not(.hidden)');
+            updateGameCounter(visibleCards.length);
+  
+        }, 300);
+    }
+  
+    function updateActiveButton(activeCategory) {
+        
+// Remove active class from all buttons
+        const buttons = document.querySelectorAll('.filter-buttons button');
+        buttons.forEach(button => {
+            button.classList.remove('active');
+        });
+  
+        // Add active class to the clicked button
+        const activeButton = Array.from(buttons).find(button => {
+            const buttonText = button.textContent.toLowerCase();
+            const categoryMap = {
+                'alla': 'all',
+                'företag': 'cooperative',
+                'tävling': 'competitive',
+                'zombie shooting': 'Zombie',
+                'familjevänlig': 'family',
+                'barnanpassat': 'Children'
+            };
+            return categoryMap[buttonText] === activeCategory;
+        });
+  
+        if (activeButton) {
+            activeButton.classList.add('active');
+        }
+    }
+    // Add CSS for active button style
+    function addActiveButtonStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .filter-buttons button.active {
+                background-color: #0056b3 !important;
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(31, 81, 255, 0.3);
+            }
+  
+            .filter-buttons button {
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+  
+            .filter-buttons button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(31, 81, 255, 0.4);
+            }
+  
+            .filter-buttons button:active {
+                transform: translateY(0);
+            }
+  
+            /* Ripple effect */
+            .filter-buttons button::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                transition: width 0.3s, height 0.3s;
+            }
+  
+            .filter-buttons button:active::before {
+                width: 100px;
+                height: 100px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+  
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        addActiveButtonStyles();
+        updateActiveButton('all');
+        updateGameCounter(document.querySelectorAll('.game-card').length);
+    });
+  
+    
+// Add keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        const buttons = document.querySelectorAll('.filter-buttons button');
+        const categories = ['all', 'cooperative', 'competitive', 'Zombie', 'family', 'Children'];
+        const currentIndex = categories.indexOf(currentFilter);
+  
+        if (event.key === 'ArrowRight' && currentIndex < categories.length - 1) {
+            filterGames(categories[currentIndex + 1]);
+        } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
+            filterGames(categories[currentIndex - 1]);
+        }
+    });
+  </script>
+
+</body>
+</html>
