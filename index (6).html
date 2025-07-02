@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VR Game Experience - Final Version</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background-color: #0d0d1a;
+      --surface-color: #1a1a2e;
+      --primary-accent: #c026d3;
+      --primary-accent-glow: rgba(192, 38, 211, 0.4);
+      --text-primary: #f0f2f5;
+      --text-secondary: #a0aec0;
+      --border-color: rgba(192, 38, 211, 0.25);
+      --glass-bg: rgba(26, 26, 46, 0.6);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-primary);
+      padding: 2rem;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at 20% 80%, var(--primary-accent-glow) 0%, transparent 40%),
+                  radial-gradient(circle at 80% 30%, var(--primary-accent-glow) 0%, transparent 40%);
+      z-index: -1; pointer-events: none; opacity: 0.6;
+    }
+    .filter-buttons {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 0.75rem;
+      margin: 2rem auto 3rem; padding: 0.5rem; background: var(--glass-bg);
+      backdrop-filter: blur(12px); border-radius: 50px; border: 1px solid var(--border-color); max-width: max-content;
+    }
+    .filter-buttons button {
+      padding: 0.75rem 1.5rem; border: none; background: transparent; color: var(--text-secondary);
+      border-radius: 50px; font-weight: 500; font-size: 0.9rem; transition: all 0.3s ease;
+    }
+    .filter-buttons button:hover { color: var(--text-primary); }
+    .filter-buttons button.active { background: var(--primary-accent); color: white; box-shadow: 0 4px 20px var(--primary-accent-glow); }
+    .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; max-width: 1600px; margin: 0 auto; }
+    .game-card {
+      background: var(--surface-color); border-radius: 1rem; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      text-decoration: none; color: inherit; display: none;
+      position: relative; border: 1px solid rgba(255, 255, 255, 0.1);;
+    }
+    .game-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px var(--primary-accent-glow); border-color: var(--primary-accent); }
+    .image-container { position: relative; width: 100%; padding-top: 100%; overflow: hidden; }
+    .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .game-card:hover .image-container img { transform: scale(1.08); }
+    .duration-badge {
+      position: absolute; top: 1rem; right: 1rem; background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px); color: white; padding: 0.4rem 0.8rem; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 500; border: 1px solid rgba(255, 255, 255, 0.2); z-index: 10;
+    }
+    #locationPopup {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(13, 13, 26, 0.6);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9999; backdrop-filter: blur(15px); opacity: 0;
+    }
+    .popup-content {
+      background: linear-gradient(145deg, rgba(30, 30, 50, 0.8), rgba(20, 20, 35, 0.8));
+      border-radius: 1.5rem; padding: 3rem; text-align: center; border: 1px solid var(--border-color);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5); max-width: 500px; width: 90%; transform: scale(0.95);
+    }
+    .popup-content h2 { font-size: 2rem; margin-bottom: 0.75rem; color: var(--text-primary); }
+    .popup-buttons { display: flex; justify-content: center; gap: 1rem; }
+    .popup-buttons button {
+      padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border: none;
+      border-radius: 0.75rem; background: var(--primary-accent); color: white;
+      transition: all 0.3s ease; flex: 1;
+    }
+    .popup-buttons button:hover { background: #d946ef; transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-accent-glow); }
+  </style>
+</head>
+<body>
+
+  
+  <div id="mainContent" style="display: none;">
+    
+    <div class="filter-buttons">
+      <button data-filter="all" class="active">Alla</button>
+      <button data-filter="popular">Popular</button>
+      <button data-filter="cooperative">Företag</button>
+      <button data-filter="competitive">Tävling</button>
+      <button data-filter="Zombie">Zombie Shooting</button>
+      <button data-filter="family">Familjevänlig</button>
+      <button data-filter="Children">Barnanpassat</button>
+    </div>
+
+    <div class="game-grid" id="gameGrid">
+        <a href="#" class="game-card family cooperative competitive Children" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://vex-solutions.com/wp-content/uploads/2024/02/kitchenPanic_thumbnail-600x403.jpg" alt="KITCHEN PANIC"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative Children" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2024/09/Partyland.png" alt="Party Playland"><div class="duration-badge">1#</div></div></a>
+        <a href="#" class="game-card Zombie cooperative competitive" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2021/07/arenaDeathSquadk_banner.jpg" alt="DEATH SQUAD"><div class="duration-badge">Popular</div></div></a>
+        <a href="#" class="game-card cooperative" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/08/Cinematic-B-Block-Breakout-Poster-Landscape-1870x770-1.jpg" alt="THE B-block BREAKOUT"><div class="duration-badge">60 min</div></div></a>
+        <a href="#" class="game-card family cooperative competitive" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_Kraken-Island_Thumbnail.jpg" alt="KRAKEN Island"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_parvus.jpg" alt="The parvus box"><div class="duration-badge">60 min</div></div></a>
+        <a href="#" class="game-card family cooperative competitive" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_cops-1-1080x770.jpg" alt="COPS & ROBBERS"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/10/videoframe_0.jpg" alt="SPACE ACADEMY"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_dragonfall.jpg" alt="DRAGONFALL"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative Children" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_smurf.jpg" alt="the-smurfs-blueberry-battle"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative competitive" data-location="kungalv"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/09/featured_greenium.jpg" alt="greenium"><div class="duration-badge">60 min</div></div></a>
+        <a href="#" class="game-card Zombie cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Mission-Z-0-1-1.png" alt="MISSION Z"><div class="duration-badge">30 min</div></div></a>
+        <a href="#" class="game-card Zombie cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/missionzbig.png" alt="MISSION Z II"><div class="duration-badge">30 min</div></div></a>
+        <a href="#" class="game-card Zombie cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Rush-Z-A-1.png" alt="RUSH Z"><div class="duration-badge">15 min</div></div></a>
+        <a href="#" class="game-card Children family cooperative" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Temple-Party-2.png" alt="TEMPLE PARTY"><div class="duration-badge">15 min</div></div></a>
+        <a href="#" class="game-card Children family" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2023/01/Web-Temple-Quest.jpg" alt="TEMPLE QUEST"><div class="duration-badge">30 min</div></div></a>
+        <a href="#" class="game-card family cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Web-Lunarscape-Express.jpg" alt="LUNARSCAPE Express"><div class="duration-badge">15 min</div></div></a>
+        <a href="#" class="game-card family cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Lunarbig.png" alt="LUNARSCAPE Breakdown"><div class="duration-badge">30 min</div></div></a>
+        <a href="#" class="game-card Zombie cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/01/Dark-Z.jpg" alt="DARK Z"><div class="duration-badge">15 min</div></div></a>
+        <a href="#" class="game-card family Children cooperative competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_Kraken-Island_Thumbnail.jpg" alt="KRAKEN Island Göteborg"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card competitive" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://vrextreme.se/wp-content/uploads/2023/09/WEB_CyberclashTournament_Beautyshot_Thumbnail.jpg" alt="Cyberclash TOURNAMENT"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card Children family" data-location="goteborg"><div class="image-container"><img decoding="async" src="http://vrextreme.se/wp-content/uploads/2024/09/Party-Playland-Square-1-scaled.jpg" alt="Party PLAYLAND Göteborg"><div class="duration-badge">15-30 min</div></div></a>
+        <a href="#" class="game-card family cooperative" data-location="goteborg"><div class="image-container"><img decoding="async" src="https://www.vex-solutions.com/wp-content/uploads/2024/10/featured_space_adv.jpg" alt="SPACE ACADEMY Adventure"><div class="duration-badge">15-30 min</div></div></a>
+    </div>
+  </div>
+
+  <div id="locationPopup">
+    <div class="popup-content">
+      <h2>Välj din plats</h2>
+      <div class="popup-buttons">
+        <button id="btnKungalv">Kungälv</button>
+        <button id="btnGoteborg">Göteborg</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mainContent = document.getElementById('mainContent');
+      const popup = document.getElementById('locationPopup');
+      const btnKungalv = document.getElementById('btnKungalv');
+      const btnGoteborg = document.getElementById('btnGoteborg');
+      const gameGrid = document.getElementById('gameGrid');
+      const allCards = Array.from(gameGrid.children);
+      const filterButtonsContainer = document.querySelector('.filter-buttons');
+      const cursor = document.querySelector('.cursor');
+      const cursorFollower = document.querySelector('.cursor-follower');
+      
+      let currentLocation = null;
+
+      const setCookie = (name, value, days = 30) => {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
+      };
+      const getCookie = (name) => {
+        const ca = document.cookie.split(';');
+        for(let c of ca) {
+          c = c.trim();
+          if (c.startsWith(name + "=")) return c.substring(name.length + 1);
+        }
+        return null;
+      };
+      const getPopularity = () => JSON.parse(localStorage.getItem('gamePopularity') || '{}');
+      const shuffleArray = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      };
+
+      const trackClick = (gameId) => {
+        const popularity = getPopularity();
+        popularity[gameId] = (popularity[gameId] || 0) + 1;
+        localStorage.setItem('gamePopularity', JSON.stringify(popularity));
+      };
+
+      const filterAndAnimateGames = (category) => {
+        const popularity = getPopularity();
+        const currentlyVisibleCards = Array.from(gameGrid.children);
+
+        gsap.to(currentlyVisibleCards, {
+          duration: 0.3, opacity: 0, scale: 0.95, ease: 'power2.in', stagger: 0.03,
+          onComplete: () => {
+            let cardsToShow = allCards.filter(card => {
+              const isLocationMatch = card.dataset.location === currentLocation;
+              const isCategoryMatch = category === 'all' || category === 'popular' || card.classList.contains(category);
+              return isLocationMatch && isCategoryMatch;
+            });
+
+            if (category === 'popular') {
+              cardsToShow.sort((a, b) => (popularity[b.dataset.gameId] || 0) - (popularity[a.dataset.gameId] || 0));
+            } else {
+              cardsToShow = shuffleArray(cardsToShow);
+            }
+            
+            gameGrid.innerHTML = '';
+            cardsToShow.forEach(card => gameGrid.appendChild(card));
+            
+            gsap.fromTo(cardsToShow, 
+              { opacity: 0, scale: 0.95, y: 20, display: 'block' }, 
+              { duration: 0.4, opacity: 1, scale: 1, y: 0, ease: 'power2.out', stagger: 0.04 }
+            );
+          }
+        });
+      };
+
+      const initializePage = (location) => {
+        currentLocation = location;
+        mainContent.style.display = 'block';
+        filterAndAnimateGames('all');
+        gsap.to(popup, { duration: 0.4, opacity: 0, ease: 'power2.in', onComplete: () => popup.style.display = 'none' });
+        gsap.from(mainContent, { duration: 0.7, opacity: 0, y: -20, ease: 'power2.out' });
+      };
+
+      const showPopup = () => {
+        gsap.to(popup, { duration: 0.5, opacity: 1, ease: 'power2.out' });
+        gsap.from(".popup-content", { duration: 0.5, scale: 0.9, opacity: 0, ease: 'back.out(1.7)', delay: 0.1 });
+      };
+
+      allCards.forEach(card => {
+        const img = card.querySelector('img');
+        if (img) {
+          const gameId = img.alt.trim();
+          card.dataset.gameId = gameId;
+          card.addEventListener('click', (e) => {
+            e.preventDefault();
+            trackClick(gameId);
+          });
+        }
+      });
+      
+      filterButtonsContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          filterButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+          filterAndAnimateGames(e.target.dataset.filter);
+        }
+      });
+
+      btnKungalv.addEventListener('click', () => { setCookie('locationChoice', 'kungalv'); initializePage('kungalv'); });
+      btnGoteborg.addEventListener('click', () => { setCookie('locationChoice', 'goteborg'); initializePage('goteborg'); });
+
+      const savedLocation = getCookie('locationChoice');
+      if (savedLocation && (savedLocation === 'kungalv' || savedLocation === 'goteborg')) {
+        initializePage(savedLocation);
+      } else {
+        showPopup();
+      }
+
+      const xTo = gsap.quickTo(cursor, "x", { duration: 0.3, ease: "power3" });
+      const yTo = gsap.quickTo(cursor, "y", { duration: 0.3, ease: "power3" });
+      const xFollowerTo = gsap.quickTo(cursorFollower, "x", { duration: 0.8, ease: "power3" });
+      const yFollowerTo = gsap.quickTo(cursorFollower, "y", { duration: 0.8, ease: "power3" });
+
+      window.addEventListener("mousemove", e => {
+        xTo(e.clientX); yTo(e.clientY);
+        xFollowerTo(e.clientX); yFollowerTo(e.clientY);
+      });
+
+      document.querySelectorAll('a, button').forEach(el => {
+          el.addEventListener('mouseenter', () => cursor.classList.add('hover-link'));
+          el.addEventListener('mouseleave', () => cursor.classList.remove('hover-link'));
+      });
+    });
+  </script>
+
+</body>
+</html>
